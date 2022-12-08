@@ -16,10 +16,11 @@ function scaleminmax(v, referencevector, minvalue, maxvalue)
     return newVector
 end
 
-doc("SVC")
+doc("SVC");
 # Load Fisher's classic iris data
 iris = dataset("datasets", "iris")
 rng = MersenneTwister(1234);
+# TODO: what does function shuffle() mean
 iris = iris[shuffle(rng, 1:end), :]
 # Split the dataset into training set and testing set
 trainRows, testRows = partition(eachindex(iris.Species), 0.5); # 70:30 split
@@ -44,11 +45,13 @@ y = iris.Species
 # Train SVM on half of the data using default parameters. See documentation
 # of svmtrain for options
 model = SVC()
+# model = SVC(kernel=LIBSVM.Kernel.Linear)
 # mach = machine(model, X, y)
 
 # tuning the model with cross validation and a grid for kernel hyperparameters
 r1 = range(model, :gamma, lower=0.00001 , upper=0.5, scale=:log)
 r2 = range(model, :cost, lower=10000, upper = 20000000, scale=:log10)
+# resampling is the cross validation parameters 
 tm = TunedModel(model=model, tuning=Grid(resolution=10),
                 resampling=CV(nfolds=5), ranges=[r1, r2],
                 measure=MisclassificationRate())
