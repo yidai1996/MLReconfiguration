@@ -102,8 +102,14 @@ bestModel = r.best_model
 bestHistory = r.best_history_entry
 
 y_hat = MLJ.predict(mach, testscaled)
+df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, BestConfiguration="Parallel", PredictedBestConfiguration="Parallel")
+
 for i in 1:length(y[testRows])
     println(y[i + trainRows[end]], y_hat[i])
+    push!(df_output,(X[i + trainRows[end], 1], X[i + trainRows[end], 2], X[i + trainRows[end], 3], X[i + trainRows[end], 4], X[i + trainRows[end], 5], X[i + trainRows[end], 6], X[i + trainRows[end], 7], X[i + trainRows[end], 8], X[i + trainRows[end], 9], y[i + trainRows[end]], y_hat[i]))
 end
 
+
 @printf "Accuracy: %.2f%%\n" mean(y_hat .== y[testRows]) * 100
+
+CSV.write("G:\\My Drive\\Research\\SVM\\Training dataset\\SVM results.csv",df_output)
