@@ -89,9 +89,11 @@ for row in eachrow(df)
         if Predict_count_p == 1
             Predict_T_feeding_parallel[Predict_count_p] = row.Tin
             Predict_xBset_parallel[Predict_count_p] = row.xBset
+            
         else 
             append!(Predict_T_feeding_parallel, row.Tin)
             append!(Predict_xBset_parallel, row.xBset)
+            println("find parallel")
         end
 
     elseif row.PredictedBestConfiguration == "hybrid"
@@ -132,12 +134,12 @@ for row in eachrow(df)
 end
 
 scatter(Predict_xBset_parallel, Predict_T_feeding_parallel, ms = 5, markershape = :+, markercolor = :red, label = "Predicted_parallel")
-scatter(Predict_xBset_hybrid, Predict_T_feeding_hybrid, ms = 5, markershape = :+, markercolor = :green, label = "Predicted_hybrid")
-scatter(Predict_xBset_parallel, Predict_T_feeding_parallel, ms = 5, markershape = :+, markercolor = :blue, label = "Predicted_mixing")
-scatter(Predict_xBset_parallel, Predict_T_feeding_parallel, ms = 5, markershape = :+, markercolor = :black, label = "Predicted_series")
+scatter!(Predict_xBset_hybrid, Predict_T_feeding_hybrid, ms = 5, markershape = :+, markercolor = :green, label = "Predicted_hybrid")
+scatter!(Predict_xBset_mixing, Predict_T_feeding_mixing, ms = 5, markershape = :+, markercolor = :blue, label = "Predicted_mixing")
+scatter!(Predict_xBset_series, Predict_T_feeding_series, ms = 5, markershape = :+, markercolor = :black, label = "Predicted_series")
 
 scatter!(Test_xBset_parallel, Test_T_feeding_parallel, ms = 5, markershape = :none, markercolor = :red, label = "Tested_parallel")
 scatter!(Test_xBset_hybrid, Test_T_feeding_hybrid, ms = 5, markershape = :none, markercolor = :green, label = "Tested_hybrid")
-scatter!(Test_xBset_parallel, Test_T_feeding_parallel, ms = 5, markershape = :none, markercolor = :blue, label = "Tested_mixing")
-scatter!(Test_xBset_parallel, Test_T_feeding_parallel, ms = 5, markershape = :none, markercolor = :black, label = "Tested_series")
+scatter!(Test_xBset_mixing, Test_T_feeding_mixing, ms = 5, markershape = :none, markercolor = :blue, label = "Tested_mixing")
+scatter!(Test_xBset_series, Test_T_feeding_series, ms = 5, markershape = :none, markercolor = :black, label = "Tested_series")
 
