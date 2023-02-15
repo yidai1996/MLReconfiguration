@@ -1,15 +1,10 @@
-using MLJ
+using MLJ, Random, CSV, DataFrames, CategoricalArrays
 using RDatasets
 using Printf
 using Statistics
-using Random
-using DataFrames
-using CSV
 using DecisionTree
-using CategoricalArrays
-SVC = @load SVC pkg=LIBSVM
-# Tree = @load DecisionTreeClassifier pkg=DecisionTree
-
+Tree = @load DecisionTreeClassifier pkg=DecisionTree
+# doc("DecisionTreeClassifier", pkg="DecisionTree")
 # referencevector is if we want to scale with reference to the training data
 # for normal scaling, just use v twice
 function scaleminmax(v, referencevector, minvalue, maxvalue)
@@ -20,55 +15,12 @@ function scaleminmax(v, referencevector, minvalue, maxvalue)
     return newVector
 end
 
-doc("SVC");
-# # Load Fisher's classic iris data
-# iris = dataset("datasets", "iris")
-# iris[:,5]
-# rng = MersenneTwister(1234);
-# iris = iris[shuffle(rng, 1:end), :]
-# # Split the dataset into training set and testing set
-# trainRows, testRows = partition(eachindex(iris.Species), 0.5); # 70:30 split
-
-# # First four dimension of input data is features
-# # X = iris[:, 1:4]
-# X = iris[:, 1:4]
-# train = X[trainRows, :]
-# test = X[testRows, :]
-# trainscaled = deepcopy(train)
-# testscaled = deepcopy(test)
-# for i in 1:4
-#     trainscaled[:, i] = scaleminmax(train[:, i], train[:, i], 0, 1) # InexactError: Int64(0.9230769230769231)
-#     testscaled[:, i] = scaleminmax(test[:, i], test[:, i], 0, 1)
-# end
-# Xscaled = vcat(trainscaled, testscaled)
-
-# # LIBSVM handles multi-class data automatically using a one-against-one strategy
-# y = iris.Species
-
-# # Train SVM on half of the data using default parameters. See documentation
-# # of svmtrain for options
-# model = SVC()
-# # model = SVC(kernel=LIBSVM.Kernel.Linear)
-# # mach = machine(model, X, y)
-
-# # tuning the model with cross validation and a grid for kernel hyperparameters
-# r1 = range(model, :gamma, lower=0.00001 , upper=0.5, scale=:log)
-# r2 = range(model, :cost, lower=10000, upper = 20000000, scale=:log10)
-
-# # resampling is the cross validation parameters 
-# # TODO figure out what is MisclassificationRate()
-# tm = TunedModel(model=model, tuning=Grid(resolution=10),
-#                 resampling=CV(nfolds=5), ranges=[r1, r2],
-#                 measure=MisclassificationRate())
-# mach = machine(tm, Xscaled,y)
-# MLJ.fit!(mach, rows=trainRows);
-# r = report(mach)
-
 
 # Input reconfiguration data
 recon = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\First try 0123\\Training set with nine features.csv",DataFrame,types=Dict(1=>Float64))
 # recon = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\Second\\Training set with nine features.csv",DataFrame,types=Dict(1=>Float64))
 # convert(CategoricalArrays.categorical,recon[:,3])
+function DecisionTree_Reconfiguration(recon)
 transform!(recon, names(recon, AbstractString) .=> categorical, renamecols=false)
 rng = MersenneTwister(1234);
 recon = recon[shuffle(rng, 1:end), :]
@@ -114,7 +66,9 @@ for i in 1:length(y[testRows])
 end
 
 
-@printf "Accuracy: %.2f%%\n" mean(y_hat .== y[testRows]) * 100
+# accuracy = @printf "Accuracy: %.2f%%\n" mean(y_hat .== y[testRows]) * 100
+accuracy = mean(y_hat .== y[testRows]) * 100
+return accuracy
 
 # TODO calculate the accuracy for each configuration (the first and second dataset) 
 

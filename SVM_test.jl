@@ -80,7 +80,8 @@ test = X[testRows, :]
 trainscaled = deepcopy(train)
 testscaled = deepcopy(test)
 
-for i in 1:size(X)[2]
+# for i in 1:size(X)[2]
+for i in 1:2
     trainscaled[:, i] = scaleminmax(train[:, i], train[:, i], -1, 1) 
     testscaled[:, i] = scaleminmax(test[:, i], test[:, i], -1, 1)
 end
