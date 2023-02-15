@@ -2,7 +2,7 @@
 
 using TSne, Statistics, MLDatasets, CSV, DataFrames, Plots
 
-df = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\SVM results.csv",DataFrame)
+df = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\First try 0123\\SVM results_70training.csv",DataFrame)
 count_row = nrow(df)
 count_feature = ncol(df) - 2
 # df1 = Matrix{2}(df)
@@ -147,14 +147,14 @@ for i in 1:size(Y)[1]
 end
 
 scatter(Predict_Y2_parallel, Predict_Y1_parallel, ms = 5, markershape = :+, markercolor = :red, label = "Predicted_parallel")
-scatter!(Predict_Y2_hybrid, Predict_Y1_hybrid, ms = 5, markershape = :+, markercolor = :green, label = "Predicted_hybrid")
-scatter!(Predict_Y2_mixing, Predict_Y1_mixing, ms = 5, markershape = :+, markercolor = :blue, label = "Predicted_mixing")
-scatter!(Predict_Y2_series, Predict_Y1_series, ms = 5, markershape = :+, markercolor = :black, label = "Predicted_series")
+scatter(Predict_Y2_hybrid, Predict_Y1_hybrid, ms = 5, markershape = :+, markercolor = :green, label = "Predicted_hybrid")
+scatter(Predict_Y2_mixing, Predict_Y1_mixing, ms = 5, markershape = :+, markercolor = :blue, label = "Predicted_mixing")
+scatter(Predict_Y2_series, Predict_Y1_series, ms = 5, markershape = :+, markercolor = :black, label = "Predicted_series")
 
-scatter!(Test_Y2_parallel, Test_Y1_parallel, ms = 2, markershape = :none, markercolor = :red, label = "Tested_parallel")
-scatter!(Test_Y2_hybrid, Test_Y1_hybrid, ms = 2, markershape = :none, markercolor = :green, label = "Tested_hybrid")
-scatter!(Test_Y2_mixing, Test_Y1_mixing, ms = 2, markershape = :none, markercolor = :blue, label = "Tested_mixing")
-scatter!(Test_Y2_series, Test_Y1_series, ms = 2, markershape = :none, markercolor = :black, label = "Tested_series")
+scatter!(Test_Y2_parallel, Test_Y1_parallel, ms = 2, markershape = :none, markerstrokewidth = 0, markercolor = :red, label = "Tested_parallel")
+scatter!(Test_Y2_hybrid, Test_Y1_hybrid, ms = 2, markershape = :none, markerstrokewidth = 0, markercolor = :green, label = "Tested_hybrid")
+scatter!(Test_Y2_mixing, Test_Y1_mixing, ms = 2, markershape = :none, markerstrokewidth = 0, markercolor = :blue, label = "Tested_mixing")
+scatter!(Test_Y2_series, Test_Y1_series, ms = 2, markershape = :none, markerstrokewidth = 0, markercolor = :black, label = "Tested_series")
 
 
 # ColorLabel_Test = String[]
