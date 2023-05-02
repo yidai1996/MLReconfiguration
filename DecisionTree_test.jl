@@ -15,16 +15,37 @@ function scaleminmax(v, referencevector, minvalue, maxvalue)
     return newVector
 end
 
+# # https://github.com/JuliaAI/DecisionTree.jl
+# features, labels = load_data("iris")
+# features = float.(features)
+# labels = string.(labels)
+
+# # train depth-truncated classifier
+# model = DecisionTreeClassifier(max_depth=2)
+# DecisionTree.fit!(model, features, labels)
+# # pretty print of the tree, to a depth of 5 nodes (optional)
+# print_tree(model, 5)
+# # apply learned model
+# DecisionTree.predict(model, [5.9,3.0,5.1,1.9])
+# # get the probability of each label
+# predict_proba(model, [5.9,3.0,5.1,1.9])
+# println(get_classes(model)) # returns the ordering of the columns in predict_proba's output
+# # run n-fold cross validation over 3 CV folds
+# # See ScikitLearn.jl for installation instructions
+# using ScikitLearn.CrossValidation: cross_val_score
+# accuracy = cross_val_score(model, features, labels, cv=3)
+
+
 
 # Input reconfiguration data
-recon = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\First try 0123\\Training set with nine features.csv",DataFrame,types=Dict(1=>Float64))
+recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of best configurations.csv",DataFrame,types=Dict(1=>Float64))
 # recon = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\Second\\Training set with nine features.csv",DataFrame,types=Dict(1=>Float64))
 # convert(CategoricalArrays.categorical,recon[:,3])
-function DecisionTree_Reconfiguration(recon)
+
 transform!(recon, names(recon, AbstractString) .=> categorical, renamecols=false)
 rng = MersenneTwister(1234);
 recon = recon[shuffle(rng, 1:end), :]
-trainRows, testRows = partition(eachindex(recon.BestConfiguration), 0.7); # 50:50 split
+trainRows, testRows = partition(eachindex(recon.BestConfiguration), 0.9); # 50:50 split
 # First four dimension of input data is features
 X = recon[:, 1:9]
 train = X[trainRows, :]
@@ -40,36 +61,39 @@ Xscaled = vcat(trainscaled, testscaled)
 y = recon.BestConfiguration
 ytrain = y[trainRows]
 
-# For reconfiguration
-model = SVC(kernel=LIBSVM.Kernel.RadialBasis)
-# tuning the model with cross validation and a grid for kernel hyperparameters
-r1 = range(model, :gamma, lower=0.00001 , upper=0.5, scale=:log)
-r2 = range(model, :cost, lower=10000, upper = 20000000, scale=:log10)
-# resampling is the cross validation parameters 
-# TODO figure out what is MisclassificationRate()
-tm = TunedModel(model=model, tuning=Grid(resolution=10),
-                resampling=CV(nfolds=3), ranges=[r1, r2],
-                measure=MisclassificationRate())
-mach = machine(tm, Xscaled,y)
-MLJ.fit!(mach, rows=trainRows);
-r = report(mach)
+features = float.(Matrix(trainscaled))
+labels = string.(ytrain)
 
-bestModel = r.best_model
-bestHistory = r.best_history_entry
+# train depth-truncated classifier
+model = DecisionTreeClassifier(max_depth=8)
+DecisionTree.fit!(model, features, labels)
+# pretty print of the tree, to a depth of 5 nodes (optional)
+print_tree(model, 8)
+# # apply learned model
+# DecisionTree.predict(model, [5.9,3.0,5.1,1.9])
+# # get the probability of each label
+# predict_proba(model, [5.9,3.0,5.1,1.9])
+println(get_classes(model)) # returns the ordering of the columns in predict_proba's output
+# run n-fold cross validation over 3 CV folds
+# See ScikitLearn.jl for installation instructions
+using ScikitLearn.CrossValidation: cross_val_score
+accuracy = cross_val_score(model, features, labels, cv=3)
 
-y_hat = MLJ.predict(mach, testscaled)
-df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, BestConfiguration="Parallel", PredictedBestConfiguration="Parallel")
+y_hat = DecisionTree.predict(model, float.(Matrix(testscaled)))
+# df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, BestConfiguration="Parallel", PredictedBestConfiguration="Parallel")
 
 for i in 1:length(y[testRows])
     println(y[i + trainRows[end]], y_hat[i])
-    push!(df_output,(X[i + trainRows[end], 1], X[i + trainRows[end], 2], X[i + trainRows[end], 3], X[i + trainRows[end], 4], X[i + trainRows[end], 5], X[i + trainRows[end], 6], X[i + trainRows[end], 7], X[i + trainRows[end], 8], X[i + trainRows[end], 9], y[i + trainRows[end]], y_hat[i]))
+    # push!(df_output,(X[i + trainRows[end], 1], X[i + trainRows[end], 2], X[i + trainRows[end], 3], X[i + trainRows[end], 4], X[i + trainRows[end], 5], X[i + trainRows[end], 6], X[i + trainRows[end], 7], X[i + trainRows[end], 8], X[i + trainRows[end], 9], y[i + trainRows[end]], y_hat[i]))
 end
 
 
-# accuracy = @printf "Accuracy: %.2f%%\n" mean(y_hat .== y[testRows]) * 100
+# @printf "Accuracy: %.2f%%\n" mean(y_hat .== y[testRows]) * 100
 accuracy = mean(y_hat .== y[testRows]) * 100
-return accuracy
+
+
+
 
 # TODO calculate the accuracy for each configuration (the first and second dataset) 
 
-CSV.write("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\Second\\SVM results_70training.csv",df_output)
+# CSV.write("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\Second\\SVM results_70training.csv",df_output)
