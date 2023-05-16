@@ -45,7 +45,7 @@ recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\
 transform!(recon, names(recon, AbstractString) .=> categorical, renamecols=false)
 rng = MersenneTwister(1234);
 recon = recon[shuffle(rng, 1:end), :]
-trainRows, testRows = partition(eachindex(recon.BestConfiguration), 0.9); # 50:50 split
+trainRows, testRows = partition(eachindex(recon.BestConfiguration), 0.7); # 50:50 split
 # First four dimension of input data is features
 X = recon[:, 1:9]
 train = X[trainRows, :]
@@ -68,7 +68,7 @@ labels = string.(ytrain)
 model = DecisionTreeClassifier(max_depth=8)
 DecisionTree.fit!(model, features, labels)
 # pretty print of the tree, to a depth of 5 nodes (optional)
-print_tree(model, 8)
+print_tree(model, 5)
 # # apply learned model
 # DecisionTree.predict(model, [5.9,3.0,5.1,1.9])
 # # get the probability of each label
@@ -79,6 +79,7 @@ println(get_classes(model)) # returns the ordering of the columns in predict_pro
 using ScikitLearn.CrossValidation: cross_val_score
 accuracy = cross_val_score(model, features, labels, cv=3)
 
+predict_proba(model,float.(Matrix(testscaled)))
 y_hat = DecisionTree.predict(model, float.(Matrix(testscaled)))
 # df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, BestConfiguration="Parallel", PredictedBestConfiguration="Parallel")
 
@@ -91,7 +92,11 @@ end
 # @printf "Accuracy: %.2f%%\n" mean(y_hat .== y[testRows]) * 100
 accuracy = mean(y_hat .== y[testRows]) * 100
 
-
+# # Save the trained machine
+# # Using MJL
+# MLJ.save("KNN_Zavreal.jl",mach)
+# mach_predict_only = machine("KNN_Zavreal.jl")
+# MLJ.predict(mach_predict_only, testscaled)
 
 
 # TODO calculate the accuracy for each configuration (the first and second dataset) 

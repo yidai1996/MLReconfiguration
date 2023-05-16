@@ -77,3 +77,23 @@ return accuracy
 # TODO calculate the accuracy for each configuration (the first and second dataset) 
 
 CSV.write("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\Second\\SVM results_70training.csv",df_output)
+
+
+# Convert targets from string to float
+# df_test = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\First try 0123\\Training set with nine features.csv", DataFrame)
+# row_num = nrow(df_test)
+# TargetConfiguration = Float64[]
+# best = df_test.BestConfiguration
+# for i in 1:row_num
+#     if best[i] == "parallel"
+#         push!(TargetConfiguration, 1)
+#     elseif best[i] == "hybrid"
+#         push!(TargetConfiguration, 2)
+#     elseif best[i] == "mixing"
+#         push!(TargetConfiguration, 3)
+#     else
+#         push!(TargetConfiguration, 4)
+#     end
+# end
+# df_test[!,:TargetConfiguration] = TargetConfiguration
+# CSV.write("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\First try 0123\\Training set with nine features_targets.csv",df_test)

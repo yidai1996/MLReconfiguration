@@ -205,7 +205,7 @@ CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\datase
 #     println(i)
 #     if i==18
 #         println("xBset=",row.xBtPI)
-#         temp=row.xBtPI
+#         temp=row.xBtPIreturn the index of sorted element of a given array julia
 #         numbertemp=parse(Float64,temp)
 #         CSV.write("G:\\My Drive\\Research\\Reconfiguration\\tempcsvfile.csv",numbertemp)
 #     end
@@ -220,22 +220,43 @@ x[:,1] = dff.parallel
 x[:,2] = dff.hybrid
 x[:,3] = dff.mixing
 x[:,4] = dff.series
-min_index = argmin(x; dims = 2)
-best_configuration_column = String[]
+index = zeros(row_number, 4)
+for i in 1:row_number
+    index[i,:] = sortperm(x[i,:])
+end
+# min_index = argmin(x; dims = 2)
+# best_configuration_column = String[]
+# second_best_configuration_column = String[]
+# third_best_configuration_column = String[]
+# worst_configuration_column = String[]
+
+Astring = Matrix{String}(undef, row_number, 4)
 
 for i in 1:row_number
-    c = min_index[i][2]
-    if c == 1
-        push!(best_configuration_column, "parallel")
-    elseif c==2
-        push!(best_configuration_column, "hybrid")
-    elseif c==3
-        push!(best_configuration_column, "mixing")
-    else
-        push!(best_configuration_column, "seires")
+    c_row = index[i,:]
+    for j in 1:4
+        c = c_row[j]
+        if c == 1
+            Astring[i,j] = "parallel"
+        elseif c==2
+            Astring[i,j] = "hybrid"
+        elseif c==3
+            Astring[i,j] = "mixing"
+        else
+            Astring[i,j] = "series"
+        end
     end
 end
-df_bestconfiguration = select!(dff, Not([:parallel, :hybrid, :mixing, :series]))
-df_bestconfiguration[!,:BestConfiguration] = best_configuration_column
-CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of best configurations.csv",df_bestconfiguration)
+print(Astring[:,1])
+# df_bestconfiguration = select!(dff, Not([:parallel, :hybrid, :mixing, :series]))
+# df_bestconfiguration[!,:BestConfiguration] = best_configuration_column
+# CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of best configurations.csv",df_bestconfiguration)
+
+# df_bestconfiguration = dff
+# df_bestconfiguration[!,:BestConfiguration] = Astring[:,1]
+# df_bestconfiguration[!,:SecondBestConfiguration] = Astring[:,2]
+# df_bestconfiguration[!,:ThirdBestConfiguration] = Astring[:,3]
+# df_bestconfiguration[!,:WorstBestConfiguration] = Astring[:,4]
+# CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of best configurations with sorted.csv",df_bestconfiguration)
+
 
