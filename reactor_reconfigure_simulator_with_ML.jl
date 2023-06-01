@@ -192,7 +192,7 @@ function MPC_solve(xBset,Tset,n,Flow,T0_inreal,T_0real,xA_0real,xB_0real,q_T,q_x
         # m[k=0:K], (lower_bound=0, upper_bound=1,start=m_init)
     end
 
-    @constraints MPC begin
+    JuMP.@constraints MPC begin
         T_init[i=1:N], T[i,0]==T_0[i]
         xA_init[i=1:N], xA[i,0]==xA_0[i]
         xB_init[i=1:N], xB[i,0]==xB_0[i]
@@ -200,14 +200,14 @@ function MPC_solve(xBset,Tset,n,Flow,T0_inreal,T_0real,xA_0real,xB_0real,q_T,q_x
         MassB[i=1:N,k=0:K-1], sum(n[j,i]*F[j,i,k] for j=1:N+1)==sum(n[i,j]*F[i,j,k] for j=1:N+1)
     end
 
-    @NLconstraints MPC begin
+    JuMP.@NLconstraints MPC begin
         Temp[i=1:N,k=0:K-1], T[i,k+1] == (1/V[i]*(sum(n[j,i]*F[j,i,k]*T[j,k] for j=1:N) + n[N+1,i]*F[N+1,i,k]*T0_in[i]- sum(n[i,j]*F[i,j,k]*T[i,k] for j=1:N+1)) + (-d_H1*mass/c_p*k1*exp(-E1/R_gas/T[i,k])*xA[i,k])+(-d_H2*mass/c_p*k2*exp(-E2/R_gas/T[i,k])*xB[i,k]) + Q[i,k]/rho/c_p/V[i])*dt + T[i,k]
         MoleFractionxA[i=1:N,k=0:K-1], xA[i,k+1] == (1/V[i]*(sum(n[j,i]*F[j,i,k]*xA[j,k] for j=1:N) + n[N+1,i]*F[N+1,i,k]*xA0 - sum(n[i,j]*F[i,j,k]*xA[i,k] for j=1:N+1)) + (-k1*exp(-E1/R_gas/T[i,k])*xA[i,k]))*dt + xA[i,k]
         MoleFractionxB[i=1:N,k=0:K-1], xB[i,k+1] == (1/V[i]*(sum(n[j,i]*F[j,i,k]*xB[j,k] for j=1:N) - sum(n[i,j]*F[i,j,k]*xB[i,k] for j=1:N+1)) + k1*exp(-E1/R_gas/T[i,k])*xA[i,k] + (-k2*exp(-E2/R_gas/T[i,k])*xB[i,k]))*dt + xB[i,k]
         OutputMoleFraction[k=0:K-1], xBt[k+1] == sum(n[i,N+1]*F[i,N+1,k]*xB[i,k+1] for i=1:N)/sum(n[i,N+1]*F[i,N+1,k] for i=1:N)
     end
 
-    @objective(MPC,Min,sum(q_T*(T[i,k]-Tset[i])^2 for i=1:N for k=0:K)+sum(q_xB*(xBt[k]-xBset[end])^2 for k=0:K)+sum(r_heat*(Q[i,k]-Q[i,k-1])^2 for i=1:N for k=1:K-1) + sum(r_flow*(n[i,j]*F[i,j,k]-n[i,j]*F[i,j,k-1])^2 for i=1:N+1 for j=1:N+1 for k=1:K-1) + sum(r_heat*(Q[i,0]-Q[i,K-1])^2 for i=1:N) + sum(r_flow*(n[i,j]*F[i,j,0]-n[i,j]*F[i,j,K-1])^2 for i=1:N+1 for j=1:N+1))
+    JuMP.@objective(MPC,Min,sum(q_T*(T[i,k]-Tset[i])^2 for i=1:N for k=0:K)+sum(q_xB*(xBt[k]-xBset[end])^2 for k=0:K)+sum(r_heat*(Q[i,k]-Q[i,k-1])^2 for i=1:N for k=1:K-1) + sum(r_flow*(n[i,j]*F[i,j,k]-n[i,j]*F[i,j,k-1])^2 for i=1:N+1 for j=1:N+1 for k=1:K-1) + sum(r_heat*(Q[i,0]-Q[i,K-1])^2 for i=1:N) + sum(r_flow*(n[i,j]*F[i,j,0]-n[i,j]*F[i,j,K-1])^2 for i=1:N+1 for j=1:N+1))
 
     JuMP.optimize!(MPC)
 
@@ -218,7 +218,7 @@ function MPC_solve(xBset,Tset,n,Flow,T0_inreal,T_0real,xA_0real,xB_0real,q_T,q_x
         error("Solver infeasible, problem stopping")
     end
     # obj=getobjectivevalue(MPC) # works for Julia 1.15.3
-    obj=objective_value(MPC) # works for Julia 1.17.2
+    obj=JuMP.objective_value(MPC) # works for Julia 1.17.2
     if print
         println("Obj in MPC=",obj)
     end
@@ -259,7 +259,7 @@ end
 # SetChange_xB = [1xN]
 
 function MPC_tracking(out_dir, n1::Array{Int,2},n2,Dist_T0,SetChange_xB,SetChange_T,q_T,q_xA,q_xB,r_heat,r_flow,dt,P,
-    dist_time,setpoint_time,initial_values; tmax=200,print=true,save_plots=false,plot_name="all_plots.png") # This is for continous disturbance on the (unstable) input temperature
+    dist_time,setpoint_time,initial_values; tmax=200,print=true,save_plots=false,plot_name="all_plots.png",MLcheck=false) # This is for continous disturbance on the (unstable) input temperature
     # (runs the moving horizon loop for set point tracking)
     # N=length(Dist_T0)
     # When testing continous disturbance system, the Dist_T0 contains the beginning point
@@ -311,7 +311,10 @@ function MPC_tracking(out_dir, n1::Array{Int,2},n2,Dist_T0,SetChange_xB,SetChang
 
     # global recordFindSS=zeros()
     # global recordStepAll=zeros()
-    
+    nn1 = [0 0 0 1; 0 0 0 1; 0 0 0 1; 1 1 1 0];
+    nn2 = [0 1 0 0; 0 0 0 1; 0 0 0 1; 1 1 1 0];
+    nn3 = [0 0 1 0; 0 0 1 0; 0 0 0 1; 1 1 1 0];
+    nn4 = [0 1 0 0; 0 0 1 0; 0 0 0 1; 1 1 1 0];
     xBsetpoint[:,1]=xBs
     Tsetpoint[:,1]=Ts
     T0_invt[:,1]=initial_values[:,1]
@@ -328,26 +331,28 @@ function MPC_tracking(out_dir, n1::Array{Int,2},n2,Dist_T0,SetChange_xB,SetChang
     mach = machine("KNN_Zavreal_best.jl")
 
     for tt=1:time_steps
-         # Inplement reconfiguration based on ML mathematical guideline.
-         features = DataFrame(Tin=T0_invt[1,tt], xBset=xBsetpoint[tt], T1initial=Tvt[1,tt], T2initial=Tvt[2,tt], T3initial=Tvt[3,tt], xB1initial=xBvt[1,tt], xB2initial=xBvt[2,tt], xB3initial=xBvt[3,tt], xBtinitial=xBtvt[tt])
+        if MLcheck==true
+             # Inplement reconfiguration based on ML mathematical guideline.
+             features = DataFrame(Tin=T0_invt[1,tt], xBset=xBsetpoint[tt], T1initial=Tvt[1,tt], T2initial=Tvt[2,tt], T3initial=Tvt[3,tt], xB1initial=xBvt[1,tt], xB2initial=xBvt[2,tt], xB3initial=xBvt[3,tt], xBtinitial=xBtvt[tt])
          
         
-         configuration = predict_mode(mach, features)
-         if configuration == ["parallel"]
-             adjacentM[:,:,tt] = [0 0 0 1; 0 0 0 1; 0 0 0 1; 1 1 1 0]
-             record_configuration[tt]=1
-         elseif configuration == ["hybrid"]
-             adjacentM[:,:,tt] = [0 1 0 0; 0 0 0 1; 0 0 0 1; 1 1 1 0]
-             record_configuration[tt]=2
-         elseif configuration == ["mixing"]
-             adjacentM[:,:,tt] = [0 0 1 0; 0 0 1 0; 0 0 0 1; 1 1 1 0]
-             record_configuration[tt]=3
-         elseif configuration == ["series"]
-            adjacentM[:,:,tt] = [0 1 0 0; 0 0 1 0; 0 0 0 1; 1 1 1 0]
-            record_configuration[tt]=4
-        else pringln("ERROR IN RECONFIGURATION MACHINE")
-            break
-         end
+             configuration = predict_mode(mach, features)
+            if configuration == ["parallel"]
+                adjacentM[:,:,tt+1]=nn1
+                 record_configuration[tt+1]=1
+            elseif configuration == ["hybrid"]
+                adjacentM[:,:,tt+1]=nn2
+                record_configuration[tt+1]=2
+            elseif configuration == ["mixing"]
+                adjacentM[:,:,tt+1]=nn3
+                 record_configuration[tt+1]=3
+            elseif configuration == ["series"]
+                adjacentM[:,:,tt+1]=nn4
+                record_configuration[tt+1]=4
+            else pringln("ERROR IN RECONFIGURATION MACHINE")
+                break
+            end
+        end
  
         resultsheatvt,resultsflowvt,obj_output_xBt[tt+1],obj_output_T[tt+1],obj_output_Q[tt+1],obj_output_F[tt+1],obj_output_total[tt+1]=MPC_solve(xBsetpoint[:,tt],Tsetpoint[:,tt],adjacentM[:,:,tt],flowvt[:,:,tt],T0_invt[:,tt],Tvt[:,tt],xAvt[:,tt],xBvt[:,tt],q_T,q_xA,q_xB,r_heat,r_flow,dt,P,N;
             heat_init=heatvt[1,tt],flow_init=flowvt[1,1,tt],print=print)
@@ -412,13 +417,17 @@ function MPC_tracking(out_dir, n1::Array{Int,2},n2,Dist_T0,SetChange_xB,SetChang
                 if j==0
                     xBsetpoint[i,tt+1]=xBs[i]
                     Tsetpoint[i,tt+1]=Ts[i]
-                    # adjacentM[:,:,tt+1]=n1
+                    if MLcheck==false
+                        adjacentM[:,:,tt+1]=n1
+                    end
                     break
                 end
                 if tt>=setpoint_time[j]
                     xBsetpoint[i,tt+1]=xBs[i]+SetChange_xB[i]
                     Tsetpoint[i,tt+1]=Ts[i]+SetChange_T[i]
-                    # adjacentM[:,:,tt+1]=n2
+                    if MLcheck==false
+                        adjacentM[:,:,tt+1]=n2
+                    end
                     break
                 else j=j-1
                 end
@@ -495,7 +504,7 @@ function MPC_tracking(out_dir, n1::Array{Int,2},n2,Dist_T0,SetChange_xB,SetChang
     # writedlm(file, data)
     
     # write to excel file
-    top_excel_file = out_dir * "\\ML_initial_T1_" * string(round(initial_values[1,2];digits=4)) *"_T2_" * string(round(initial_values[2,2];digits=4)) * "_T3_" * string(round(initial_values[3,2];digits=4)) * "_xB1_" *string(round(initial_values[1,3];digits=4)) * "_xB2_" *string(round(initial_values[2,3];digits=4)) * "_xB3_" *string(round(initial_values[3,3];digits=4)) * "_T0_" *string(round(initial_values[1,1]+Dist_T0[1,1];digits=4))* "SetChange_xB_" * string(round(SetChange_xB[end];digits = 4)) * ".xlsx"
+    top_excel_file = out_dir * "\\noML_initial_T1_" * string(round(initial_values[1,2];digits=4)) *"_T2_" * string(round(initial_values[2,2];digits=4)) * "_T3_" * string(round(initial_values[3,2];digits=4)) * "_xB1_" *string(round(initial_values[1,3];digits=4)) * "_xB2_" *string(round(initial_values[2,3];digits=4)) * "_xB3_" *string(round(initial_values[3,3];digits=4)) * "_T0_" *string(round(initial_values[1,1]+Dist_T0[1,1];digits=4))* "SetChange_xB_" * string(round(SetChange_xB[end];digits = 4)) * ".xlsx"
 
     XLSX.writetable(top_excel_file, data, column_names)
     # close(file)

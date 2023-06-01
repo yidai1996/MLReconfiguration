@@ -7,3 +7,5 @@ configuration = predict_mode(mach, df_output)
 if configuration == ["hybrid"]
 println("yes!")
 end
+
+MPC_tracking("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration_ML_MPC", [0 0 0 1; 0 0 0 1; 0 0 0 1; 1 1 1 0], [0 0 0 1; 0 0 0 1; 0 0 0 1; 1 1 1 0],[0+10 0+10;0+0 0+0;0+0 0+0],[0;0;0+0],[0 ;0 ;0 ],1,1e7,1e7,1e-5,1e7,90,1000,[0,15],0,[300 388.7 0.11;300 388.7 0.11;300 388.7 0.11];tmax=1500,print=false,save_plots=false,plot_name="all_plots.pdf",MLcheck=false)

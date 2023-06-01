@@ -213,7 +213,7 @@ CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additi
 # i=0;
 
 # Find the best configuration and create a new CSV file for it 
-dff = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\dataset\\Training set of all configurations.csv", DataFrame)
+dff = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\dataset\\Training set of all configurations.csv", DataFrame)
 row_number = nrow(dff)
 x = zeros(row_number,4)
 x[:,1] = dff.parallel
@@ -259,7 +259,7 @@ df_bestconfiguration[!,:BestConfiguration] = Astring[:,1]
 df_bestconfiguration[!,:SecondBestConfiguration] = Astring[:,2]
 df_bestconfiguration[!,:ThirdBestConfiguration] = Astring[:,3]
 df_bestconfiguration[!,:WorstBestConfiguration] = Astring[:,4]
-CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\dataset\\Training set of best configurations with sorted.csv",df_bestconfiguration)
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\dataset\\Training set of best configurations with sorted.csv",df_bestconfiguration)
 
 
  
