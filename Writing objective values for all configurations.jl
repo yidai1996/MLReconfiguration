@@ -116,10 +116,10 @@ df4 = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial
 # end
 
 # For initial conditions Permutation
-dir_initalconditions1 = "C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\parallel"
-dir_initalconditions2 = "C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\2and1parallel"
-dir_initalconditions3 = "C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\mixing"
-dir_initalconditions4 = "C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\series"
+dir_initalconditions1 = "C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\parallel"
+dir_initalconditions2 = "C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\hybrid"
+dir_initalconditions3 = "C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\mixing"
+dir_initalconditions4 = "C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\series"
 
 x1 = readdir(dir_initalconditions1)
 x2 = readdir(dir_initalconditions2)
@@ -127,7 +127,7 @@ x3 = readdir(dir_initalconditions3)
 x4 = readdir(dir_initalconditions4)
 
 for i in 1:length(x1)
-    xf1 = XLSX.readxlsx("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\parallel\\"*x1[i])
+    xf1 = XLSX.readxlsx("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\parallel\\"*x1[i])
     sh1 = xf1["Sheet1"]
     NewTin = sh1["C2"]
     NewxBset = sh1["B3"]
@@ -144,7 +144,7 @@ for i in 1:length(x1)
 end
 
 for i in eachindex(x2)
-    xf2 = XLSX.readxlsx("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\2and1parallel\\"*x2[i])
+    xf2 = XLSX.readxlsx("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\hybrid\\"*x2[i])
     sh = xf2["Sheet1"]
     NewTin = sh["C2"]
     NewxBset = sh["B3"]
@@ -160,7 +160,7 @@ for i in eachindex(x2)
 end
 
 for i in eachindex(x3)
-    xf3 = XLSX.readxlsx("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\mixing\\"*x3[i])
+    xf3 = XLSX.readxlsx("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\mixing\\"*x3[i])
     sh = xf3["Sheet1"]
     NewTin = sh["C2"]
     NewxBset = sh["B3"]
@@ -176,7 +176,7 @@ for i in eachindex(x3)
 end
 
 for i in eachindex(x4)
-    xf4 = XLSX.readxlsx("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\series\\"*x4[i])
+    xf4 = XLSX.readxlsx("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\series\\"*x4[i])
     sh = xf4["Sheet1"]
     NewTin = sh["C3"]
     NewxBset = sh["B3"]
@@ -191,10 +191,10 @@ for i in eachindex(x4)
     push!(df4,(NewTin,NewxBset,NewT1,NewT2,NewT3,NewxB1,NewxB2,NewxB3,NewxBt,ObjValueHybridSeries))
 end
 
-CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of parallel.csv",df1)
-CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of hybrid.csv",df2)
-CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of mixing.csv",df3)
-CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of series.csv",df4)
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\dataset\\Training set of parallel.csv",df1)
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\dataset\\Training set of hybrid.csv",df2)
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\dataset\\Training set of mixing.csv",df3)
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\dataset\\Training set of series.csv",df4)
 # file = CSV.File(IOBuffer(data); header=["times", "xBset", "T01", "T02", "T03", "Tvt1", "Tvt2", "Tvt3", "xBvt1",	"xBvt2", "xBvt3", "xBtvt", "flowvt1", "flowvt2", "flowvt3", "heatvt1", "heatvt2", "heatvt3", "PerformanceIndex", "xBtPI"],select=["xBtPI"])
 # df = CSV.write("tempcsvfile.csv")
 # i=0;
@@ -213,7 +213,7 @@ CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\datase
 # i=0;
 
 # Find the best configuration and create a new CSV file for it 
-dff = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of all configurations.csv", DataFrame)
+dff = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\dataset\\Training set of all configurations.csv", DataFrame)
 row_number = nrow(dff)
 x = zeros(row_number,4)
 x[:,1] = dff.parallel
@@ -224,6 +224,8 @@ index = zeros(row_number, 4)
 for i in 1:row_number
     index[i,:] = sortperm(x[i,:])
 end
+
+# println(index[4502,:])
 # min_index = argmin(x; dims = 2)
 # best_configuration_column = String[]
 # second_best_configuration_column = String[]
@@ -252,11 +254,12 @@ print(Astring[:,1])
 # df_bestconfiguration[!,:BestConfiguration] = best_configuration_column
 # CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of best configurations.csv",df_bestconfiguration)
 
-# df_bestconfiguration = dff
-# df_bestconfiguration[!,:BestConfiguration] = Astring[:,1]
-# df_bestconfiguration[!,:SecondBestConfiguration] = Astring[:,2]
-# df_bestconfiguration[!,:ThirdBestConfiguration] = Astring[:,3]
-# df_bestconfiguration[!,:WorstBestConfiguration] = Astring[:,4]
-# CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of best configurations with sorted.csv",df_bestconfiguration)
+df_bestconfiguration = dff
+df_bestconfiguration[!,:BestConfiguration] = Astring[:,1]
+df_bestconfiguration[!,:SecondBestConfiguration] = Astring[:,2]
+df_bestconfiguration[!,:ThirdBestConfiguration] = Astring[:,3]
+df_bestconfiguration[!,:WorstBestConfiguration] = Astring[:,4]
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\dataset\\Training set of best configurations with sorted.csv",df_bestconfiguration)
 
 
+ 

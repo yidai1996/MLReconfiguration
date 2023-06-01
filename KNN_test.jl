@@ -27,7 +27,7 @@ end
 
 # Input reconfiguration data
 # recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of best configurations.csv",DataFrame,types=Dict(1=>Float64))
-recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of best configurations with sorted.csv",DataFrame,types=Dict(1=>Float64))
+recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Training set of best configurations with sorted.csv",DataFrame,types=Dict(1=>Float64))
 # recon = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\Second\\Training set with nine features.csv",DataFrame,types=Dict(1=>Float64))
 # convert(CategoricalArrays.categorical,recon[:,3])
 
@@ -54,14 +54,22 @@ ytrain = y[trainRows]
 NearestNeighborModels.list_kernels()
 ## KNNClassifier instantiation
 model = KNNClassifier(weights = NearestNeighborModels.Zavreal())
-mach = machine(model, Xscaled, y)  
+r1 = range(model, :K, lower=2 , upper=10)
+tm = TunedModel(model=model, range=r1, resampling=CV(nfolds=3), measure=log_loss, check_measure=false)
+mach = machine(tm, Xscaled, y)  
+# mach = machine(model, Xscaled, y)  
 MLJ.fit!(mach, rows=trainRows);
 fitted_params(mach)
+
+r = report(mach)
+
+bestModel = r.best_model
+bestHistory = r.best_history_entry
 # # Save the trained machine
 # # Using MJL
-# MLJ.save("KNN_Zavreal.jl",mach)
-# mach_predict_only = machine("KNN_Zavreal.jl")
-# MLJ.predict(mach_predict_only, testscaled)
+MLJ.save("KNN_Zavreal_best.jl",mach)
+mach_predict_only = machine("KNN_Zavreal_best.jl")
+MLJ.predict(mach_predict_only, testscaled)
 # # Using an arbitrary serializer
 # using JLSO
 # # This machine can now be serialized
@@ -99,4 +107,4 @@ for i in 1:length(y[testRows])
 end
 accuracy = mean(y_hat_compare .== y[testRows]) * 100
 
-CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\KNN_Zavreal_kernel_93.56_sorted.csv",df_output)
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\KNN_Zavreal_kernel_94.41_sorted.csv",df_output)
