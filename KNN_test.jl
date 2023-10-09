@@ -28,13 +28,14 @@ end
 # Input reconfiguration data
 # recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\dataset\\Training set of best configurations.csv",DataFrame,types=Dict(1=>Float64))
 recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Training set of best configurations with sorted.csv",DataFrame,types=Dict(1=>Float64))
+# recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\dataset\\Training set of best configurations with sorted.csv",DataFrame,types=Dict(1=>Float64))
 # recon = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\Second\\Training set with nine features.csv",DataFrame,types=Dict(1=>Float64))
 # convert(CategoricalArrays.categorical,recon[:,3])
 
 transform!(recon, names(recon, AbstractString) .=> categorical, renamecols=false)
 rng = MersenneTwister(1234);
 recon = recon[shuffle(rng, 1:end), :]
-trainRows, testRows = partition(eachindex(recon.BestConfiguration), 0.7); # 50:50 split
+trainRows, testRows = partition(eachindex(recon.BestConfiguration), 0.9); # 50:50 split
 # First four dimension of input data is features
 X = recon[:, 1:9]
 train = X[trainRows, :]
@@ -67,8 +68,8 @@ bestModel = r.best_model
 bestHistory = r.best_history_entry
 # # Save the trained machine
 # # Using MJL
-MLJ.save("KNN_Zavreal_best.jl",mach)
-mach_predict_only = machine("KNN_Zavreal_best.jl")
+MLJ.save("KNN_Zavreal_best_bigdata.jl",mach)
+mach_predict_only = machine("KNN_Zavreal_best_bigdata.jl")
 MLJ.predict(mach_predict_only, testscaled)
 # # Using an arbitrary serializer
 # using JLSO

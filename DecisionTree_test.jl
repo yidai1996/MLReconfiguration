@@ -2,9 +2,11 @@ using MLJ, Random, CSV, DataFrames, CategoricalArrays
 using RDatasets
 using Printf
 using Statistics
-using DecisionTree
-Tree = @load DecisionTreeClassifier pkg=DecisionTree
-tree = Tree()
+# using DecisionTree
+# using Pkg
+# Pkg.activate("my_fresh_mlj_environment", shared=true)
+doc("DecisionTreeClassifier", pkg="DecisionTree")
+DecisionTreeClassifier = @load DecisionTreeClassifier pkg=DecisionTree
 # doc("DecisionTreeClassifier", pkg="DecisionTree")
 # referencevector is if we want to scale with reference to the training data
 # for normal scaling, just use v twice
@@ -48,7 +50,7 @@ recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\
 transform!(recon, names(recon, AbstractString) .=> categorical, renamecols=false)
 rng = MersenneTwister(1234);
 recon = recon[shuffle(rng, 1:end), :]
-trainRows, testRows = partition(eachindex(recon.BestConfiguration), 0.7); # 50:50 split
+trainRows, testRows = partition(eachindex(recon.BestConfiguration), 0.7); # 70:30 split
 # First four dimension of input data is features
 X = recon[:, 1:9]
 train = X[trainRows, :]
@@ -64,29 +66,34 @@ Xscaled = vcat(trainscaled, testscaled)
 y = recon.BestConfiguration
 ytrain = y[trainRows]
 
-features = float.(Matrix(trainscaled))
-labels = string.(ytrain)
+# features = float.(Matrix(trainscaled))
+# labels = string.(ytrain)
+
+X_tree = (Tin=Xscaled[trainRows,1], xBset=Xscaled[trainRows,2], T1initial=Xscaled[trainRows,3], T2initial=Xscaled[trainRows,4], T3initial=Xscaled[trainRows,5], xB1initial=Xscaled[trainRows,6], xB2initial=Xscaled[trainRows,7], xB3initial=Xscaled[trainRows,8], xBtinitial=Xscaled[trainRows,9])
 
 # train depth-truncated classifier
-model = DecisionTreeClassifier(max_depth=3)
+# X, y=@load_iris
+model = DecisionTreeClassifier(max_depth=9)
+mach = machine(model, X_tree, ytrain) 
+MLJ.fit!(mach)
+fitted_params(mach)
 
-# mach = machine(model, Xscaled, y)  
-# MLJ.fit!(mach, rows=trainRows);
-DecisionTree.fit!(model, features, labels)
+r = report(mach)
 # pretty print of the tree, to a depth of 5 nodes (optional)
-print_tree(model, 5)
+# print_tree(mach, 5)
 # # apply learned model
 # DecisionTree.predict(model, [5.9,3.0,5.1,1.9])
 # # get the probability of each label
 # predict_proba(model, [5.9,3.0,5.1,1.9])
-println(get_classes(model)) # returns the ordering of the columns in predict_proba's output
+# println(get_classes(mach)) # returns the ordering of the columns in predict_proba's output
 # run n-fold cross validation over 3 CV folds
 # See ScikitLearn.jl for installation instructions
-using ScikitLearn.CrossValidation: cross_val_score
-accuracy = cross_val_score(model, features, labels, cv=3)
+# using ScikitLearn.CrossValidation: cross_val_score
+# accuracy = cross_val_score(mach, X_tree, ytrain, cv=3)
 
-predict_proba(model,float.(Matrix(testscaled)))
-y_hat = DecisionTree.predict(model, float.(Matrix(testscaled)))
+# predict_proba(mach,float.(Matrix(testscaled)))
+y_hat = MLJ.predict(mach, testscaled)
+labels = predict_mode(mach, testscaled)
 # df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, BestConfiguration="Parallel", PredictedBestConfiguration="Parallel")
 df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, parallel=0.0, hybrid=0.0, mixing=0.0, series=0.0, BestConfiguration="parallel", SecondBestConfiguration="hybrid", ThirdBestConfiguration="mixing", WorstBestConfiguration="series", PredictedBestConfiguration="Parallel")
 
@@ -108,11 +115,11 @@ for i in 1:length(y[testRows])
 end
 
 # @printf "Accuracy: %.2f%%\n" mean(y_hat .== y[testRows]) * 100
-accuracy = mean(y_hat .== y[testRows]) * 100
+accuracy = mean(labels .== y[testRows]) * 100
 
 # # Save the trained machine
-# Using MJL
-# MLJ.save("Tree_max_depth_8.jl",mach)
+using MLJ
+MLJ.save("Tree_max_depth_9.jl",mach)
 # mach_predict_only = machine("Tree_max_depth_3.jl")
 # MLJ.predict(mach_predict_only, testscaled)
 

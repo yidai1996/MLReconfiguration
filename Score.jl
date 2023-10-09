@@ -18,7 +18,8 @@ function String_to_Number(a)
 end
 
 
-df = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Tree_max_depth_3_68.44_sorted.csv",DataFrame,types=Dict(1=>Float64))
+# df = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Tree_max_depth_3_68.44_sorted.csv",DataFrame,types=Dict(1=>Float64))
+df = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Adaboost.csv",DataFrame,types=Dict(1=>Float64))
 Predict = df.PredictedBestConfiguration
 Best = df.BestConfiguration
 row_number = nrow(df)
@@ -127,7 +128,8 @@ df_percentage = df[:,[:PredictedBestConfiguration, :BestConfiguration]]
 df_percentage[!, :Predict_PI] = Predict_pi
 df_percentage[!, :Best_PI] = Best_pi
 df_percentage[!, :Percentage] = percentage
-CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\score\\score of Tree_max_depth_3_68.44_sorted.csv",df_percentage)
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\score\\score of Adaboost.csv",df_percentage)
 
 different_in_percentage = percentage[findall(x-> x>0, percentage)]
 greatthan_10 = percentage[findall(x-> x>0.1, percentage)]
+findmax(different_in_percentages)

@@ -504,7 +504,11 @@ function MPC_tracking(out_dir, n1::Array{Int,2},n2,Dist_T0,SetChange_xB,SetChang
     # writedlm(file, data)
     
     # write to excel file
-    top_excel_file = out_dir * "\\noML_initial_T1_" * string(round(initial_values[1,2];digits=4)) *"_T2_" * string(round(initial_values[2,2];digits=4)) * "_T3_" * string(round(initial_values[3,2];digits=4)) * "_xB1_" *string(round(initial_values[1,3];digits=4)) * "_xB2_" *string(round(initial_values[2,3];digits=4)) * "_xB3_" *string(round(initial_values[3,3];digits=4)) * "_T0_" *string(round(initial_values[1,1]+Dist_T0[1,1];digits=4))* "SetChange_xB_" * string(round(SetChange_xB[end];digits = 4)) * ".xlsx"
+    if MLcheck == false
+        top_excel_file = out_dir * "\\noML_initial_T1_" * string(round(initial_values[1,2];digits=4)) *"_T2_" * string(round(initial_values[2,2];digits=4)) * "_T3_" * string(round(initial_values[3,2];digits=4)) * "_xB1_" *string(round(initial_values[1,3];digits=4)) * "_xB2_" *string(round(initial_values[2,3];digits=4)) * "_xB3_" *string(round(initial_values[3,3];digits=4)) * "_T0_" *string(round(initial_values[1,1]+Dist_T0[1,1];digits=4))* "SetChange_xB_" * string(round(SetChange_xB[end];digits = 4)) * ".xlsx"
+    else 
+        top_excel_file = out_dir * "\\ML_initial_T1_" * string(round(initial_values[1,2];digits=4)) *"_T2_" * string(round(initial_values[2,2];digits=4)) * "_T3_" * string(round(initial_values[3,2];digits=4)) * "_xB1_" *string(round(initial_values[1,3];digits=4)) * "_xB2_" *string(round(initial_values[2,3];digits=4)) * "_xB3_" *string(round(initial_values[3,3];digits=4)) * "_T0_" *string(round(initial_values[1,1]+Dist_T0[1,1];digits=4))* "SetChange_xB_" * string(round(SetChange_xB[end];digits = 4)) * ".xlsx"
+    end
 
     XLSX.writetable(top_excel_file, data, column_names)
     # close(file)

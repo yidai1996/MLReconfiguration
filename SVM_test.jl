@@ -1,9 +1,11 @@
 using MLJ, RDatasets, Printf, Statistics, Random, DataFrames, CSV, LIBSVM, CategoricalArrays
+import LIBSVM
 
-# SVC = @load SVC pkg=LIBSVM
-NuSVC = @load NuSVC pkg=LIBSVM
+SVC = @load SVC pkg=LIBSVM
+# NuSVC = @load NuSVC pkg=LIBSVM
 
-doc("NuSVC", pkg="LIBSVM")
+# doc("NuSVC", pkg="LIBSVM")
+doc("SVC", pkg="LIBSVM")
 # Tree = @load DecisionTreeClassifier pkg=DecisionTree
 
 # referencevector is if we want to scale with reference to the training data
@@ -20,7 +22,7 @@ doc("SVC")
 
 
 # Input reconfiguration data
-recon = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\First try 0123\\Training set with nine features.csv",DataFrame,types=Dict(1=>Float64))
+recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Training set of best configurations with sorted.csv",DataFrame,types=Dict(1=>Float64))
 # recon = CSV.read("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\Second\\Training set with nine features.csv",DataFrame,types=Dict(1=>Float64))
 # function SVM_Reconfiguration(recon)
 transform!(recon, names(recon, AbstractString) .=> categorical, renamecols=false)
@@ -45,21 +47,26 @@ ytrain = y[trainRows]
 # model = svmtrain(train, ytrain)
 
 # For reconfiguration
-model = NuSVC(kernel=LIBSVM.Kernel.RadialBasis)
+# model = NuSVC(kernel=LIBSVM.Kernel.RadialBasis)
+# model = SVC()
+model = SVC(kernel=LIBSVM.Kernel.RadialBasis)
 # tuning the model with cross validation and a grid for kernel hyperparameters
-r1 = range(model, :gamma, lower=0.00001 , upper=0.5, scale=:log)
-r2 = range(model, :cost, lower=10000, upper = 20000000, scale=:log10)
+# r1 = range(model, :gamma, lower=0.00001 , upper=5, scale=:log)
+# r2 = range(model, :cost, lower=1000, upper = 50000, scale=:log)
+# r1 = range(model, :gamma, lower=0.00001 , upper=0.5, scale=:log)
+# r2 = range(model, :cost, lower=10000, upper = 20000000, scale=:log10)
 # resampling is the cross validation parameters 
 # TODO figure out what is MisclassificationRate()
-tm = TunedModel(model=model, tuning=Grid(resolution=10),
-                resampling=CV(nfolds=3), ranges=[r1, r2],
-                measure=MisclassificationRate())
-mach = machine(tm, Xscaled,y)
+# tm = TunedModel(model=model, tuning=Grid(resolution=10),
+#                 resampling=CV(nfolds=3), ranges=[r1, r2],
+#                 measure=MisclassificationRate())
+mach = machine(model, Xscaled,y) 
 MLJ.fit!(mach, rows=trainRows);
+fitted_params(mach)
 r = report(mach)
 
-bestModel = r.best_model
-bestHistory = r.best_history_entry
+# bestModel = r.best_model
+# bestHistory = r.best_history_entry
 
 y_hat = MLJ.predict(mach, testscaled)
 df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, BestConfiguration="Parallel", PredictedBestConfiguration="Parallel")
@@ -73,6 +80,10 @@ end
 # @printf "Accuracy: %.2f%%\n" mean(y_hat .== y[testRows]) * 100
 accuracy = mean(y_hat .== y[testRows]) * 100
 return accuracy
+
+MLJ.save("SVM.jl",mach)
+# mach_predict_only = machine("KNN_Zavreal_best_bigdata.jl")
+# MLJ.predict(mach_predict_only, testscaled)
 
 # TODO calculate the accuracy for each configuration (the first and second dataset) 
 
