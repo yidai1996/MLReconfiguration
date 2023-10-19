@@ -68,8 +68,8 @@ bestModel = r.best_model
 bestHistory = r.best_history_entry
 # # Save the trained machine
 # # Using MJL
-MLJ.save("KNN_Zavreal_best_bigdata.jl",mach)
-mach_predict_only = machine("KNN_Zavreal_best_bigdata.jl")
+MLJ.save("KNN_Zavreal_best_bigdata_new.jl",mach)
+mach_predict_only = machine("KNN_Zavreal_best_bigdata_new.jl")
 MLJ.predict(mach_predict_only, testscaled)
 # # Using an arbitrary serializer
 # using JLSO
@@ -82,12 +82,13 @@ MLJ.predict(mach_predict_only, testscaled)
 # restore!(loaded_mach)
 # MLJ.predict(loaded_mach, testscaled)
 
-y_hat = MLJ.predict(mach, testscaled)
+# y_hat = MLJ.predict(mach, testscaled)
+y_hat = MLJ.predict(mach_predict_only, testscaled)
 labels = predict_mode(mach, testscaled)
 # a = levelcode.(labels)
 # findall(a->a==5,a)
 df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, parallel=0.0, hybrid=0.0, mixing=0.0, series=0.0, BestConfiguration="parallel", SecondBestConfiguration="hybrid", ThirdBestConfiguration="mixing", WorstBestConfiguration="series", PredictedBestConfiguration="Parallel")
-
+size(y[testRows])
 for i in 1:length(y[testRows])
     println(y[i + trainRows[end]], labels[i])
     if labels[i] == "hybrid"
@@ -108,4 +109,4 @@ for i in 1:length(y[testRows])
 end
 accuracy = mean(y_hat_compare .== y[testRows]) * 100
 
-CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\KNN_Zavreal_kernel_94.41_sorted.csv",df_output)
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\KNN_Zavreal_kernel_new_sorted.csv",df_output)

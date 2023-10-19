@@ -87,7 +87,7 @@ MLJ.save("SVM.jl",mach)
 
 # TODO calculate the accuracy for each configuration (the first and second dataset) 
 
-CSV.write("G:\\My Drive\\Research\\SVM\\Training dataset\\Initial conditions_setpointtracking_disturbancerejection_permutation\\Second\\SVM results_70training.csv",df_output)
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\SVM results_70training.csv",df_output)
 
 
 # Convert targets from string to float

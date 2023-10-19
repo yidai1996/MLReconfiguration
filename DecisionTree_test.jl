@@ -126,4 +126,4 @@ MLJ.save("Tree_max_depth_9.jl",mach)
 
 # TODO calculate the accuracy for each configuration (the first and second dataset) 
 
-CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Tree_max_depth_3_68.44_sorted.csv",df_output)
+CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Tree_max_depth_9_84.99_sorted.csv",df_output)
