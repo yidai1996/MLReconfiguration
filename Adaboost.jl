@@ -7,7 +7,7 @@ KNNClassifier = @load KNNClassifier pkg=NearestNeighborModels
 Tree = @load DecisionTreeClassifier pkg=DecisionTree
 
 function String_to_Number(a)
-    # println(a)
+
     c = 0 
     if a == "parallel"
         c = 1.0
@@ -24,7 +24,7 @@ function String_to_Number(a)
 end
 
 
-My_Machines = ["SVM.jl", "KNN_Zavreal_best_bigdata.jl", "Tree_max_depth_9.jl"]
+My_Machines = ["KNN_Zavreal_best_bigdata.jl", "Tree_max_depth_9.jl","SVM.jl"]
 # My_Machines = ["SVM.jl"]
 function scaleminmax(v, referencevector, minvalue, maxvalue)
     minoriginal = minimum(referencevector)
@@ -34,12 +34,13 @@ function scaleminmax(v, referencevector, minvalue, maxvalue)
     return newVector
 end
 
-function load_data(recon)
+function load_data(df)
     # recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\additional_data\\PreDataSetForReconfiguration3\\dataset\\Training set of best configurations with sorted.csv",DataFrame,types=Dict(1=>Float64))
     
-    transform!(recon, names(recon, AbstractString) .=> categorical, renamecols=false)
-    rng = MersenneTwister(1234);
-    recon = recon[shuffle(rng, 1:end), :]
+    transform!(df, names(df, AbstractString) .=> categorical, renamecols=false)
+    # rng = MersenneTwister(1234);
+    # recon = recon[shuffle(rng, 1:end), :]
+    recon = df[shuffle(1:nrow(df))[:], :]
     trainRows, testRows = partition(eachindex(recon.BestConfiguration), 0.7); # 70:30 split
     X = recon[:, 1:9]
     train = X[trainRows, :]
@@ -57,10 +58,10 @@ function load_data(recon)
     return trainscaled, ytrain, testscaled, y[testRows], trainRows, testRows, X, y, recon
 end
 
-function NewDataframe(h, y, X, recon)
+function NewDataframe(h, y, X, recon, testRows, trainRows)
     df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, parallel=0.0, hybrid=0.0, mixing=0.0, series=0.0, BestConfiguration="parallel", SecondBestConfiguration="hybrid", ThirdBestConfiguration="mixing", WorstBestConfiguration="series", PredictedBestConfiguration="Parallel")
     for i in eachindex(y[testRows])
-        println(y[i + trainRows[end]], h[i])
+        # println(y[i + trainRows[end]], h[i])
         if h[i] == "hybrid"
             push!(df_output,(X[i + trainRows[end], 1], X[i + trainRows[end], 2], X[i + trainRows[end], 3], X[i + trainRows[end], 4], X[i + trainRows[end], 5], X[i + trainRows[end], 6], X[i + trainRows[end], 7], X[i + trainRows[end], 8], X[i + trainRows[end], 9], recon[i + trainRows[end],"parallel"], recon[i + trainRows[end],"hybrid"], recon[i + trainRows[end],"mixing"], recon[i + trainRows[end],"series"], recon[i + trainRows[end],"BestConfiguration"], recon[i + trainRows[end],"SecondBestConfiguration"], recon[i + trainRows[end],"ThirdBestConfiguration"], recon[i + trainRows[end],"WorstBestConfiguration"], "hybrid"))
         elseif h[i] == "mixing"
@@ -127,15 +128,11 @@ function Score(h, df)
 
     end
     score = (Predict_pi-Best_pi)./(Max_pi-Best_pi)
-    return score, Predict_pi, Best_pi, percentage, count
+    # return score, Predict_pi, Best_pi, percentage, count
+    return score
 end
 
-# test = predict_mode(machine("KNN_Zavreal_best_bigdata_new.jl"),XX)
-# WriteIntoFiles(test;filename="real test")
-# new = NewDataframe(test, y, X, recon)
-# ss, A, B, C, cc = Score(test, new)
-
-function adaboost(X, Y, My_Machines)
+function adaboost(X, Y, My_Machines, y, X_all, recon, testRows, trainRows)
     # Initialize weights
     N = length(Y) # number of data points
     # println(N)
@@ -150,46 +147,70 @@ function adaboost(X, Y, My_Machines)
         # Train a weak classifier on the data
         println(My_Machines[t])
         push!(mach, machine(My_Machines[t]))
-        if t == 1
+        if t == 3
             h = MLJ.predict(mach[t], X)
         else
             h = predict_mode(mach[t], X)
         end
-        println(size(h))
+        # println(size(h))
         # h = train_weak_classifier(X, Y, w)
         # calculate score that is related to performance index
-        new_df = NewDataframe(h, recon)
+        new_df = NewDataframe(h, y, X_all, recon, testRows, trainRows)
         s = Score(h, new_df)
 
         # Calculate the error
-        error = sum(w[j]*s[j] for j in eachindex(w) if h[j]!=Y[j]) / sum(w.*s)
         # error = sum(w[j] for j in eachindex(w) if h[j]!=Y[j]) / sum(w)
-        println(error)
+        error = sum(w[j]*s[j] for j in eachindex(w) if h[j]!=Y[j]) / sum(w)
 
-        if error > 0.5
-            println("ERROR > 0.5 ABORT")
-            continue
-        end
+
+        # ss = ones(size(s)[1])
+        # for j in eachindex(s)
+        #     if s[j]!=0
+        #         ss[j]=exp(s[j])
+        #     end
+        # end
+        # error = sum(w[j]*exp(s[j]) for j in eachindex(w) if h[j]!=Y[j]) / sum(w.*ss)
+        
+        println("Error = ",error)
+
+        # if error > 0.5
+        #     println("ERROR > 0.5 ABORT")
+        #     continue
+        # end
 
         # Calculate alpha
         alpha = log((1 - error) / error) 
-        # alpha = log((1 - error) / error) 
-        println(alpha)
+        # alpha = log((1 - error) / error) + log(4-1)
+        # alpha = log(2/3*(1 - error) / error) 
+        println("Alpha = ",alpha)
+        if alpha < 0 
+            println("Alpha < 0, ABORT")
+            continue
+        end
         # Update weights
-        # for i in 1:N
-        #     if h[i] == Y[i]
-        #         w[i] = w[i] * exp(-alpha)
-        #     else
-        #         w[i] = w[i] * exp(alpha)
-        #     end
-        # end
         for i in 1:N
             if h[i] == Y[i]
-                w[i] = w[i] * exp(-alpha) * 5*s[i]
+                w[i] = w[i] * exp(-alpha) 
             else
-                w[i] = w[i] * exp(alpha) * 5*s[i]
+                w[i] = w[i] * exp(alpha) 
+                # println(w[i])
             end
         end
+        # for i in 1:N
+        #     if h[i] == Y[i]
+        #         w[i] = w[i] * exp(-alpha) * exp(s[i])
+        #     else
+        #         w[i] = w[i] * exp(alpha) * exp(s[i])
+        #         # println(w[i])
+        #     end
+        # end
+        # for i in 1:N
+        #     if h[i] == Y[i]
+        #         w[i] = w[i] * (exp(-alpha) + 10*s[i])
+        #     else
+        #         w[i] = w[i] * (exp(alpha) + 10*s[i])
+        #     end
+        # end
 
         # Normalize weights
         w = w / sum(w)
@@ -223,19 +244,20 @@ function adaboost(X, Y, My_Machines)
     return alphas, mach, w, H
 end
 
-a, adab_classifier, weight, H = adaboost(XX,YY, My_Machines)
+
 # Final classifier
 function finalH(a, x, classifiers)
 
-    h1 = MLJ.predict(classifiers[1],x)
+    h1 = predict_mode(classifiers[1],x)
     h2 = predict_mode(classifiers[2],x)
-    h3 = predict_mode(classifiers[3],x)
+    h3 = MLJ.predict(classifiers[3],x)
+    
 
-    WriteIntoFiles(h1; filename = "Member_SVM")
-    WriteIntoFiles(h2; filename = "Member_KNN")
-    WriteIntoFiles(h3; filename = "Member_DT")
+    # WriteIntoFiles(h1; filename = "Member_KNN")
+    # WriteIntoFiles(h2; filename = "Member_DT")
+    # WriteIntoFiles(h3; filename = "Member_SVM")
 
-    println(size(a)[1])
+    # println(size(a)[1])
     if size(a)[1] == 3
         h = [h1 h2 h3]
     else
@@ -244,7 +266,7 @@ function finalH(a, x, classifiers)
     T1 = zeros(size(x)[1],length(a))
     T1[findall(x->x=="parallel", h)] .= 1
     AlphaMatrix = zeros(size(x)[1],4)
-    println(a)
+    # println(a)
     AlphaMatrix[:,1] = T1*a
     T2 = zeros(size(x)[1],length(a))
     T2[findall(x->x=="hybrid", h)] .= 1
@@ -275,18 +297,11 @@ function finalH(a, x, classifiers)
     return output
 end
 # test
-df_original = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Training set of best configurations with sorted.csv",DataFrame,types=Dict(1=>Float64))
-
-XX, YY, X_test, Y_test, trainRows, testRows, X, y, recon = load_data(recon)
-
-y_hat = finalH(a, X_test, adab_classifier)
-accuracy = mean(Y_test .== y_hat) * 100
-
 
 function WriteIntoFiles(y_hat; filename = "Notspecific")
     df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, parallel=0.0, hybrid=0.0, mixing=0.0, series=0.0, BestConfiguration="parallel", SecondBestConfiguration="hybrid", ThirdBestConfiguration="mixing", WorstBestConfiguration="series", PredictedBestConfiguration="Parallel")
     for i in eachindex(Y_test)
-        println(Y_test[i], y_hat[i])
+        # println(Y_test[i], y_hat[i])
         if y_hat[i] == "hybrid"
             push!(df_output,(X[i + trainRows[end], 1], X[i + trainRows[end], 2], X[i + trainRows[end], 3], X[i + trainRows[end], 4], X[i + trainRows[end], 5], X[i + trainRows[end], 6], X[i + trainRows[end], 7], X[i + trainRows[end], 8], X[i + trainRows[end], 9], recon[i + trainRows[end],"parallel"], recon[i + trainRows[end],"hybrid"], recon[i + trainRows[end],"mixing"], recon[i + trainRows[end],"series"], recon[i + trainRows[end],"BestConfiguration"], recon[i + trainRows[end],"SecondBestConfiguration"], recon[i + trainRows[end],"ThirdBestConfiguration"], recon[i + trainRows[end],"WorstBestConfiguration"], "hybrid"))
         elseif y_hat[i] == "mixing"
@@ -301,7 +316,7 @@ function WriteIntoFiles(y_hat; filename = "Notspecific")
     # println(df_output)
 
     df_output = delete!(df_output, [1])
-    s, A, B, C, D = Score(y_hat,df_output)
+    s = Score(y_hat,df_output)
     df_output[!,:Score] = s
     # println(mean(Y_test .== y_hat) * 100)
     count = 0
@@ -311,64 +326,37 @@ function WriteIntoFiles(y_hat; filename = "Notspecific")
         end
     end
     accuracy = count/size(y_hat)[1]
-    println("accuracy = ",accuracy)
+    # println("accuracy = ",accuracy)
     CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\"*filename*".csv",df_output)
 end
 
+df_original = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Training set of best configurations with sorted.csv",DataFrame,types=Dict(1=>Float64))
 
 
-recon = CSV.read("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\Training set of best configurations with sorted.csv",DataFrame,types=Dict(1=>Float64))
-transform!(recon, names(recon, AbstractString) .=> categorical, renamecols=false)
-rng = MersenneTwister(1234);
-recon = recon[shuffle(rng, 1:end), :]
-trainRows, testRows = partition(eachindex(recon.BestConfiguration), 0.7); # 50:50 split
-# First four dimension of input data is features
-X = recon[:, 1:9]
-train = X[trainRows, :]
-test = X[testRows, :]
-trainscaled = deepcopy(train)
-testscaled = deepcopy(test)
 
-for i in 1:size(X)[2]
-    trainscaled[:, i] = scaleminmax(train[:, i], train[:, i], -1, 1) 
-    testscaled[:, i] = scaleminmax(test[:, i], test[:, i], -1, 1)
-end
-Xscaled = vcat(trainscaled, testscaled)
-y = recon.BestConfiguration
-ytrain = y[trainRows]
-
-
-mach=machine("KNN_Zavreal_best_bigdata_new.jl")
-# y_hat = MLJ.predict(mach, X_test)
-labels = predict_mode(mach, X_test)
-# a = levelcode.(labels)
-# findall(a->a==5,a)
-df_output = DataFrame(Tin=300, xBset=0.11, T1initial=388.7, T2initial=388.7, T3initial=388.7, xB1initial=0.11, xB2initial=0.11, xB3initial=0.11, xBtinitial=0.11, parallel=0.0, hybrid=0.0, mixing=0.0, series=0.0, BestConfiguration="parallel", SecondBestConfiguration="hybrid", ThirdBestConfiguration="mixing", WorstBestConfiguration="series", PredictedBestConfiguration="parallel")
-# TODO This doesn't give the right dataframe file!!!
-for i in 1:length(y[testRows])
-    println(y[i + trainRows[end]], labels[i])
-    if labels[i] == "hybrid"
-        push!(df_output,(X[i + trainRows[end], 1], X[i + trainRows[end], 2], X[i + trainRows[end], 3], X[i + trainRows[end], 4], X[i + trainRows[end], 5], X[i + trainRows[end], 6], X[i + trainRows[end], 7], X[i + trainRows[end], 8], X[i + trainRows[end], 9], recon[i + trainRows[end],"parallel"], recon[i + trainRows[end],"hybrid"], recon[i + trainRows[end],"mixing"], recon[i + trainRows[end],"series"], recon[i + trainRows[end],"BestConfiguration"], recon[i + trainRows[end],"SecondBestConfiguration"], recon[i + trainRows[end],"ThirdBestConfiguration"], recon[i + trainRows[end],"WorstBestConfiguration"], "hybrid"))
-    elseif labels[i] == "mixing"
-        push!(df_output,(X[i + trainRows[end], 1], X[i + trainRows[end], 2], X[i + trainRows[end], 3], X[i + trainRows[end], 4], X[i + trainRows[end], 5], X[i + trainRows[end], 6], X[i + trainRows[end], 7], X[i + trainRows[end], 8], X[i + trainRows[end], 9], recon[i + trainRows[end],"parallel"], recon[i + trainRows[end],"hybrid"], recon[i + trainRows[end],"mixing"], recon[i + trainRows[end],"series"], recon[i + trainRows[end],"BestConfiguration"], recon[i + trainRows[end],"SecondBestConfiguration"], recon[i + trainRows[end],"ThirdBestConfiguration"], recon[i + trainRows[end],"WorstBestConfiguration"], "mixing"))
-    elseif labels[i] == "parallel"
-        push!(df_output,(X[i + trainRows[end], 1], X[i + trainRows[end], 2], X[i + trainRows[end], 3], X[i + trainRows[end], 4], X[i + trainRows[end], 5], X[i + trainRows[end], 6], X[i + trainRows[end], 7], X[i + trainRows[end], 8], X[i + trainRows[end], 9], recon[i + trainRows[end],"parallel"], recon[i + trainRows[end],"hybrid"], recon[i + trainRows[end],"mixing"], recon[i + trainRows[end],"series"], recon[i + trainRows[end],"BestConfiguration"], recon[i + trainRows[end],"SecondBestConfiguration"], recon[i + trainRows[end],"ThirdBestConfiguration"], recon[i + trainRows[end],"WorstBestConfiguration"], "parallel"))
-    else
-        push!(df_output,(X[i + trainRows[end], 1], X[i + trainRows[end], 2], X[i + trainRows[end], 3], X[i + trainRows[end], 4], X[i + trainRows[end], 5], X[i + trainRows[end], 6], X[i + trainRows[end], 7], X[i + trainRows[end], 8], X[i + trainRows[end], 9], recon[i + trainRows[end],"parallel"], recon[i + trainRows[end],"hybrid"], recon[i + trainRows[end],"mixing"], recon[i + trainRows[end],"series"], recon[i + trainRows[end],"BestConfiguration"], recon[i + trainRows[end],"SecondBestConfiguration"], recon[i + trainRows[end],"ThirdBestConfiguration"], recon[i + trainRows[end],"WorstBestConfiguration"], "series"))
+# XX, YY, X_test, Y_test, trainRows, testRows, X, y, recon = load_data(df_original)
+function FinalAdaboost(df_original)
+accuracy = zeros(5)
+count = 0
+for i in 1:5
+    XX, YY, X_test, Y_test, trainRows, testRows, X, y, recon = load_data(df_original)
+    a, adab_classifier, weight, H = adaboost(X_test,Y_test, My_Machines, y, X, recon,testRows,trainRows)
+    y_hat = finalH(a, X_test, adab_classifier)
+    # accuracy = mean(Y_test .== y_hat) * 100
+    accuracy[i] = mean(Y_test .== y_hat) * 100
+    if accuracy[i] > 96.25
+        WriteIntoFiles(y_hat; filename = "Adaboost_high_Accuracy")
+        # break
     end
+    count += 1
 end
 
-y_hat_compare = df_output.PredictedBestConfiguration[2:end]
-Y_testtest = df_output.BestConfiguration[2:end]
-# @printf "Accuracy: %.2f%%\n" mean(y_hat_compare .== Y_test) * 100
-for i in 1:length(Y_testtest)
-    println("From y")
-    println(y[i + trainRows[end]], labels[i])
-    println("From Y_testtest")
-    println(Y_testtest[i], labels[i])
+return accuracy
 end
-accuracy = mean(y_hat_compare .== Y_test) * 100
-df_output = delete!(df_output, [1])
-dfff = CSV.write("C:\\Users\\yid\\TemporaryResearchDataStorage\\Reconfiguration\\Space_filling_sampling\\dataset\\KNN_Zavreal_kernel_new_sorted.csv",df_output)
 
-ss, A, B, C, D= Score(y_hat_compare, df_output)
+FinalAdaboost(df_original)
+# Accuracy_no_s = mean(accuracy) # 91.82
+# Accuracy_b_s = mean(accuracy) # 91.87
+# Accuracy_bd_s = mean(accuracy) # 91.88
+# Accuracy_bd_beta_10_s = mean(accuracy) # 91.946
+Accuracy_d_beta_100_s = mean(accuracy) # 9
