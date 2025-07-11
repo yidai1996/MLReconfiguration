@@ -7,8 +7,6 @@ using DataFrames
 using MLJ
 KNNClassifier = @load KNNClassifier pkg=NearestNeighborModels
 
-# include("permutation.jl")
-
 function loadProcessData(N::Int,n,initial_values;print=true)
     # global F0=9/3600/N #m^3/s
     global Vlittle=0.5/3
@@ -114,13 +112,7 @@ function MPC_solve(xBset,Tset,n,Flow,T0_inreal,T_0real,xA_0real,xB_0real,q_T,q_x
     T_0=T_0real
     xA_0=xA_0real
     xB_0=xB_0real
-    # println("T0_in=",T0_in)
-    # println("T0_0=",T_0)
-    # println("xB=",xB_0)
 
-    # Only steady states for input streams from outside instead of other reactors
-    # heat_ss,flow_ss=findSS_all(T0_in,Ts,xBs,n,Flow)
-    # println(Tset,xBset)
     heat_ss,flow_ss,mpclook=findSS_all(T0_in,Tset,xBset,n,print=print)
 
 
@@ -255,8 +247,6 @@ function MPC_solve(xBset,Tset,n,Flow,T0_inreal,T_0real,xA_0real,xB_0real,q_T,q_x
     return results_heat0, results_flow0, obj_xBt,obj_T,obj_Q,obj_F,obj
 
 end
-
-# SetChange_xB = [1xN]
 
 function MPC_tracking(out_dir, n1::Array{Int,2},n2,Dist_T0,SetChange_xB,SetChange_T,q_T,q_xA,q_xB,r_heat,r_flow,dt,P,
     dist_time,setpoint_time,initial_values; tmax=200,print=true,save_plots=false,plot_name="all_plots.png",MLcheck=false) # This is for continous disturbance on the (unstable) input temperature
@@ -631,38 +621,6 @@ function findSS_all(T0_in,T_0,xB_0,n;print=true)
     # flow_ss=zeros(N)
     flow_ss=soln.zero[1:L]
     heat_ss=soln.zero[L+1:end]
-    # for i=1:N
-    #     for k=1:L
-    #         if Lookup[k][1]==N+1&&Lookup[k][2]==i
-    #             # println("i=",i," k=",k)
-    #             flow_ss[i]=soln.zero[k]
-    #         end
-    #     end
-    # end
-    # println("Lookup=",Lookup)
-    # println("flow_ss=",flow_ss," and the length =",length(flow_ss))
-    # for i=1:L
-    #     if flow_ss[i]<0
-    #         println("flow_ss=",flow_ss)
-    #         error("Negative flowrate occurs")
-    #     end
-    # end
     return heat_ss,flow_ss,Lookup
 end
 
-
-# parallel_3R = [0 0 0 1; 0 0 0 1; 0 0 0 1; 1 1 1 0]
-# series_3R = [0 1 0 0; 0 0 1 0; 0 0 0 1; 1 1 1 0]
-# parallel_2_and_1_3R = [0 1 0 0; 0 0 0 1; 0 0 0 1; 1 1 1 0]
-# mixing_3R = [0 0 1 0; 0 0 1 0; 0 0 0 1; 1 1 1 0]
-# parallel_4R = [0 0 0 0 1; 0 0 0 0 1; 0 0 0 0 1; 0 0 0 0 1; 1 1 1 1 0]
-# non_parallel_4R = [0 0 1 0 0; 0 0 1 0 0; 0 0 0 1 0; 0 0 0 0 1; 1 1 1 1 0] # just an example, this is 1 and 2 mix into 3 and 4 is in series after 3
-
-# initial_conditions = repeat([300 388.7 0.11],size(parallel_3R)[1] - 1)
-# initial_conditions_3R_series = [300 370 0.055;300 380 0.08; 300 388.7 0.11] # 3R series
-# initial_conditions_3R_2_and_1 = [300 370 0.055;300 388.7 0.11; 300 388.7 0.11] # 3R 2and1 parallel
-# initial_conditions_3R_mixing = [300 370 0.055;300 370 0.055; 300 388.7 0.11] # 3R mixing
-# initial_conditions_4R_parallel = repeat([300 388.7 0.11],size(parallel_4R)[1] - 1)
-# initial_conditions_4R_non_parallel = repeat([300 388.7 0.11],size(parallel_4R)[1] - 1) # same as above, just an example
-
-# disturbances = [0 0; 0 0; 0 0]
